@@ -1,0 +1,57 @@
+1. Install MediaWiki on CPanel (search MediaBase on CPanel and you can find it) 
+2. Create ssh key on CPanel and write down the IP addess and your user name and password
+3. Download PuTTY on your PC/Mac (use ssh to install WikiBase extension)
+4. Open PuTTY, fill in IP address and upload ssh key
+5. Login using your user name and password
+6. Follow the installation instruction https://www.mediawiki.org/wiki/Wikibase/Installation
+Below is steps in detail
+(1) check your composer version
+	composer -v
+    if you don't have a composer installed, follow the instruction here to install it first: https://www.namecheap.com/support/knowledgebase/article.aspx/9977/29/how-to-install-composer-on-shared-servers
+(2) Download from Git
+	## mediawiki is in the folder public_html, install wikibase in the extension of mediawiki
+        cd pubilc_html
+	cd mediawiki
+	cd extensions
+        ## replace REL1_34 with the version of MediaWiki (for me is REL1_31)
+	git clone -b REL1_34 https://github.com/wikimedia/mediawiki-extensions-		Wikibase.git Wikibase
+	cd Wikibase
+	git submodule update --init --recursive
+(3) Fetch all dependencies
+	# go to the root of your mediawiki installation:
+	cd ../.. 
+	# create a json file
+	nano composer.local.json
+	# paste the following
+{
+  "extra": {
+    "merge-plugin": {
+      "include": [
+        "extensions/Wikibase/composer.json"
+      ]
+    }
+  }
+}
+	# save changes
+	ctrl+x, Yes 
+	# if composer is available as a binary
+        composer install --no-dev
+        # if you have errors when run the above code, try this: 
+        composer install
+(4) Adjust your LocalSettings.php
+	nano LocalSettings.php
+        # paste the following  
+	$wgEnableWikibaseRepo = true;
+	$wgEnableWikibaseClient = true;
+	require_once "$IP/extensions/Wikibase/repo/Wikibase.php";
+	require_once "$IP/extensions/Wikibase/repo/ExampleSettings.php";
+	require_once "$IP/extensions/Wikibase/client/WikibaseClient.php";
+	require_once "$IP/extensions/Wikibase/client/ExampleSettings.php";
+        # save changes
+	ctrl+x, Yes 
+(5) Run the setup scripts
+	php maintenance/update.php
+	cd extensions/Wikibase
+	php lib/maintenance/populateSitesTable.php
+	php repo/maintenance/rebuildItemsPerSite.php
+	php client/maintenance/populateInterwiki.php
